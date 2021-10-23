@@ -15,10 +15,20 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (req.method === "POST" && req.body.countryCode) {
     res.status(200).json({
-      data: State.getStatesOfCountry(req.body.countryCode).map((item: IState) => ({
-        ...item,
-        name: item.name.replace(" Province", ""),
-      })),
+      data: State.getStatesOfCountry(req.body.countryCode).map((item: IState) => {
+        let stateName = item.name.replace(" Province", "");
+
+        if (stateName === "Izmir") {
+          stateName = "İzmir";
+        } else if (stateName === "Istanbul") {
+          stateName = "İstanbul";
+        }
+
+        return {
+          ...item,
+          name: stateName,
+        };
+      }),
     });
   } else {
     res.json({ error: "Bad Request" });
