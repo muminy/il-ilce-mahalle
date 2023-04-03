@@ -1,34 +1,24 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import type { NextApiRequest, NextApiResponse } from "next";
-import { City, State } from "country-state-city";
+import { NextRequest } from "next/server"
+import { City } from "country-state-city"
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  // another common pattern
-  // res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
-  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
+export const config = {
+  runtime: "edge",
+}
 
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
-  );
+export default async function handler(req: NextRequest) {
+  try {
+    const params = req.nextUrl.searchParams
+    const countryCode = params.get("countryCode")
+    const stateCode = params.get("stateCode")
 
-  if (req.method === "POST") {
-    if (!req.body.countryCode || !req.body.stateCode) {
-      return res.json({ error: "Bad Request" });
+    if (countryCode && stateCode) {
+      return new Response(
+        JSON.stringify(City.getCitiesOfState(countryCode, stateCode))
+      )
     } else {
-      const getName = State.getStateByCodeAndCountry(
-        req.body.stateCode,
-        req.body.countryCode
-      )?.name.replace(" Province", "");
-
-      res.status(200).json({
-        data: City.getCitiesOfState(req.body.countryCode, req.body.stateCode).filter(
-          (item) => item.name !== getName && item.name.search(" İlçesi") === -1
-        ),
-      });
+      return new Response("Bad Request")
     }
-  } else {
-    res.json({ error: "Bad Request" });
+  } catch (e) {
+    return new Response("Some Error", { status: 400 })
   }
 }
